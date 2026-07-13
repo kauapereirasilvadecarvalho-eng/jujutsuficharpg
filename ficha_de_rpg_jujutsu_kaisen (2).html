@@ -1,0 +1,1913 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jujutsu Chronicles - RPG Character Sheet (Online & Local)</title>
+    <!-- Tailwind CSS para estilização moderna -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts para tipografia gótica e moderna -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome para ícones temáticos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #05070a;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(121, 40, 202, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(219, 39, 119, 0.08) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+        
+        .title-gothic {
+            font-family: 'Cinzel', serif;
+        }
+
+        /* Efeito de brilho amaldiçoado */
+        .cursed-glow {
+            box-shadow: 0 0 15px rgba(121, 40, 202, 0.3);
+        }
+        .cursed-glow-red {
+            box-shadow: 0 0 15px rgba(220, 38, 38, 0.4);
+        }
+        .cursed-glow-green {
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Animação do Black Flash */
+        @keyframes blackFlash {
+            0% { background-color: #ffffff; filter: invert(0); }
+            10% { background-color: #000000; filter: invert(1); }
+            20% { background-color: #ff003c; }
+            30% { background-color: #000000; }
+            100% { background-color: transparent; }
+        }
+
+        .black-flash-active {
+            animation: blackFlash 0.6s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0); }
+            10%, 30%, 50%, 70%, 90% { transform: translate(-8px, 4px); }
+            20%, 40%, 60%, 80% { transform: translate(8px, -4px); }
+        }
+
+        .shake-active {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090b0e;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a1f3d;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #7928ca;
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen pb-12">
+
+    <!-- Custom Toast Notification Box -->
+    <div id="toast-box" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none bg-slate-900 border border-purple-500 rounded-xl px-5 py-3.5 cursed-glow flex items-center gap-3">
+        <span id="toast-icon" class="text-purple-400 text-lg"><i class="fa-solid fa-bell"></i></span>
+        <span id="toast-message" class="text-xs font-semibold text-slate-100">Atualizando os selos de energia...</span>
+    </div>
+
+    <!-- Custom Confirmation Modal -->
+    <div id="confirm-modal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-950 border border-red-900 rounded-2xl max-w-sm w-full p-6 text-center cursed-glow-red">
+            <span class="text-red-500 text-4xl mb-3 block"><i class="fa-solid fa-triangle-exclamation"></i></span>
+            <h3 class="title-gothic text-lg text-red-200 mb-2">Confirmar Ação?</h3>
+            <p id="confirm-text" class="text-xs text-slate-400 mb-6">Esta ação afetará os registros de energia.</p>
+            <div class="flex justify-center gap-3">
+                <button onclick="closeConfirmModal(false)" class="px-4 py-2 text-xs bg-slate-900 border border-slate-800 rounded-lg hover:bg-slate-800 transition-all">Cancelar</button>
+                <button onclick="closeConfirmModal(true)" class="px-5 py-2 text-xs bg-red-700 hover:bg-red-600 rounded-lg font-semibold transition-all">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TELA DE PORTAL / LOGIN INICIAL (ONLINE) -->
+    <div id="portal-screen" class="fixed inset-0 bg-slate-950/95 backdrop-blur-lg z-40 flex items-center justify-center p-4">
+        <div class="max-w-md w-full bg-slate-900 border border-purple-950/80 rounded-2xl p-6 cursed-glow flex flex-col gap-6">
+            <div class="text-center">
+                <div class="flex items-center justify-center gap-2.5 mb-2">
+                    <span class="text-purple-500 text-3xl animate-pulse"><i class="fa-solid fa-fire-flame-curved"></i></span>
+                    <h2 class="text-2xl font-black tracking-wider title-gothic text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-red-500">
+                        JUJUTSU PORTAL
+                    </h2>
+                </div>
+                <p class="text-xs text-slate-400 uppercase tracking-widest">Acesse ou crie sua identidade na barreira</p>
+                <div id="portal-loading" class="mt-4 text-xs text-purple-400 flex flex-col items-center justify-center gap-2">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-notch animate-spin text-lg"></i> 
+                        <span id="portal-loading-text">Conectando à barreira de energia...</span>
+                    </div>
+                    <button id="btn-force-local" onclick="ativarSessaoLocalManual()" class="hidden mt-3 px-3 py-1.5 bg-purple-950/50 hover:bg-purple-900/50 border border-purple-800 text-purple-300 text-[10px] rounded-lg transition-all font-semibold">
+                        Entrar em Modo Local/Offline
+                    </button>
+                </div>
+            </div>
+
+            <!-- Formulários do Portal (Ocultos até o Firebase conectar ou dar Fallback) -->
+            <div id="portal-actions" class="hidden space-y-4">
+                <!-- Abas do Portal -->
+                <div class="flex border-b border-slate-800 text-xs">
+                    <button id="tab-portal-create" onclick="switchPortalTab('create')" class="flex-1 py-2 text-center font-bold border-b-2 border-purple-500 text-purple-300">Novo Feiticeiro</button>
+                    <button id="tab-portal-sync" onclick="switchPortalTab('sync')" class="flex-1 py-2 text-center font-bold text-slate-400 hover:text-slate-200">Entrar com Código</button>
+                    <button id="tab-portal-mestre" onclick="switchPortalTab('mestre')" class="flex-1 py-2 text-center font-bold text-slate-400 hover:text-slate-200">Mestre</button>
+                </div>
+
+                <!-- Formulário 1: Criar Nova Ficha -->
+                <div id="form-portal-create" class="space-y-3.5">
+                    <div>
+                        <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Seu Nome de Usuário (Jogador)</label>
+                        <input type="text" id="portal-user-name" placeholder="Ex: @SatoruPlayer" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-600 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Nome do Personagem</label>
+                        <input type="text" id="portal-char-name" placeholder="Ex: Gojo Satoru" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-600 focus:outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Clã</label>
+                            <input type="text" id="portal-clan" placeholder="Ex: Gojo" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-600 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">PIN de Edição (4 Dígitos)</label>
+                            <input type="password" id="portal-pin" maxlength="4" placeholder="Ex: 1234" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-center text-white font-mono focus:border-purple-600 focus:outline-none">
+                        </div>
+                    </div>
+                    <button onclick="criarFichaOnlineDoPortal()" class="w-full py-2.5 bg-purple-700 hover:bg-purple-600 rounded-lg font-bold text-xs uppercase tracking-wider transition-all cursed-glow mt-2">Criar Registro Amaldiçoado</button>
+                </div>
+
+                <!-- Formulário 2: Sincronizar Ficha Existente -->
+                <div id="form-portal-sync" class="hidden space-y-3.5">
+                    <div>
+                        <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Código da Ficha (Ex: JJK-1234)</label>
+                        <input type="text" id="portal-sync-id" placeholder="JJK-XXXX" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-center font-mono text-white focus:border-purple-600 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">PIN de Edição</label>
+                        <input type="password" id="portal-sync-pin" maxlength="4" placeholder="••••" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-center font-mono text-white focus:border-purple-600 focus:outline-none">
+                    </div>
+                    <button onclick="conectarFichaDoPortal()" class="w-full py-2.5 bg-purple-900 hover:bg-purple-800 border border-purple-700 rounded-lg font-bold text-xs uppercase tracking-wider transition-all mt-2">Sincronizar Ficha</button>
+                </div>
+
+                <!-- Formulário 3: Entrar como Mestre -->
+                <div id="form-portal-mestre" class="hidden space-y-3.5">
+                    <div>
+                        <label class="text-[10px] uppercase font-bold text-slate-400 block mb-1">Chave Geral do Mestre</label>
+                        <input type="password" id="portal-mestre-key" placeholder="Insira a Chave do Mestre" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-center font-mono text-white focus:border-purple-600 focus:outline-none">
+                    </div>
+                    <button onclick="acessarMestreDoPortal()" class="w-full py-2.5 bg-red-900 hover:bg-red-800 border border-red-700 rounded-lg font-bold text-xs uppercase tracking-wider transition-all mt-2">Desbloquear Sessão de Mestre</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container Principal -->
+    <div id="main-wrapper" class="max-w-7xl mx-auto px-4 pt-6">
+        
+        <!-- Header / Logo -->
+        <header class="flex flex-col md:flex-row justify-between items-center border-b border-purple-950/40 pb-6 mb-4 gap-4">
+            <div class="text-center md:text-left">
+                <div class="flex items-center justify-center md:justify-start gap-3">
+                    <span class="text-purple-500 text-3xl animate-pulse"><i class="fa-solid fa-fire-flame-curved"></i></span>
+                    <h1 class="text-3xl font-extrabold tracking-wider title-gothic text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">
+                        JUJUTSU CHRONICLES
+                    </h1>
+                </div>
+                <p class="text-xs text-slate-400 mt-1 uppercase tracking-widest">Painel de Feiticeiro & Controle Amaldiçoado</p>
+            </div>
+
+            <!-- Painel de Conexão Online -->
+            <div class="bg-slate-950/90 border border-slate-800 rounded-xl p-3 flex flex-wrap items-center gap-3 max-w-md w-full justify-between">
+                <div class="flex items-center gap-2.5">
+                    <span id="conn-indicator" class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+                    <div class="text-left">
+                        <p class="text-[10px] uppercase font-bold text-slate-400">Status Conexão</p>
+                        <p id="conn-text" class="text-xs font-semibold text-slate-500">Buscando rede amaldiçoada...</p>
+                    </div>
+                </div>
+                
+                <div class="flex gap-1.5 items-center">
+                    <button onclick="desvincularFicha()" class="px-3 py-1.5 bg-slate-900 hover:bg-slate-850 border border-slate-800 text-xs text-red-400 font-semibold rounded-lg transition-all" title="Sair da Ficha e Voltar ao Portal">
+                        <i class="fa-solid fa-right-from-bracket"></i> Sair
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navegação de Abas -->
+        <div class="flex border-b border-purple-950/40 mb-6 overflow-x-auto">
+            <button id="tab-ficha" onclick="alternarVisao('ficha')" class="px-6 py-3 border-b-2 border-purple-500 font-bold text-sm text-purple-300 transition-all flex items-center gap-2 shrink-0">
+                <i class="fa-solid fa-user-ninja"></i> Minha Ficha Individual
+            </button>
+            <button id="tab-mestre" onclick="alternarVisao('mestre')" class="px-6 py-3 border-b-2 border-transparent hover:text-purple-400 text-slate-400 font-bold text-sm transition-all flex items-center gap-2 shrink-0">
+                <i class="fa-solid fa-users-gear animate-pulse text-purple-500"></i> Painel do Mestre (Todas as Fichas)
+            </button>
+        </div>
+
+        <!-- ABA 1: VISÃO DA FICHA INDIVIDUAL -->
+        <div id="view-ficha" class="block space-y-6">
+            <!-- Banner de Cargos e Regras de Edição -->
+            <div class="bg-slate-950/80 border border-purple-950/40 rounded-xl p-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center gap-3">
+                    <span id="role-badge-icon" class="text-xl text-blue-400"><i class="fa-solid fa-user-shield"></i></span>
+                    <div class="text-left">
+                        <span class="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Permissão de Acesso</span>
+                        <div class="flex items-center gap-2">
+                            <span id="display-role" class="text-sm font-bold text-blue-400 uppercase">Modo Jogador (Visualização)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controles de Mestre -->
+                <div class="flex gap-2">
+                    <div id="admin-pin-group" class="flex gap-2 items-center">
+                        <input type="password" id="input-admin-pin" placeholder="PIN do Admin" class="bg-slate-900 border border-slate-800 rounded px-2.5 py-1.5 text-xs w-28 text-center focus:outline-none focus:border-purple-600">
+                        <button onclick="alternarCargo()" id="btn-toggle-role" class="px-4 py-1.5 bg-slate-900 hover:bg-purple-950/30 border border-purple-900/50 rounded-lg text-xs font-semibold text-purple-300 transition-all">
+                            <i class="fa-solid fa-key"></i> Liberar Edição
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grade Principal -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                
+                <!-- COLUNA ESQUERDA: Identidade e Status Físicos (4 colunas) -->
+                <div class="lg:col-span-4 flex flex-col gap-6">
+                    
+                    <!-- Perfil & Identidade -->
+                    <div class="bg-slate-950/80 border border-purple-950/50 rounded-2xl p-6 cursed-glow">
+                        <h2 class="title-gothic text-purple-400 text-lg mb-4 flex items-center gap-2 border-b border-slate-900 pb-2">
+                            <i class="fa-solid fa-id-card"></i> Registro de Feiticeiro
+                        </h2>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-xs font-semibold text-slate-400 uppercase">Nome do Feiticeiro</label>
+                                <input type="text" id="char-name" value="Megumi Fushiguro" oninput="marcarModificado()" class="w-full bg-slate-900/90 border border-slate-800 focus:border-purple-600 rounded-lg px-3 py-2 text-white mt-1 text-sm transition-all focus:outline-none" disabled>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-400 uppercase">Grau</label>
+                                    <select id="char-grade" onchange="marcarModificado()" class="w-full bg-slate-900/90 border border-slate-800 focus:border-purple-600 rounded-lg px-3 py-2 text-white mt-1 text-sm transition-all focus:outline-none" disabled>
+                                        <option value="4º Grau">4º Grau</option>
+                                        <option value="3º Grau">3º Grau</option>
+                                        <option value="2º Grau">2º Grau</option>
+                                        <option value="1º Grau" selected>1º Grau</option>
+                                        <option value="Grau Especial">Grau Especial</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="text-xs font-semibold text-slate-400 uppercase">Clã</label>
+                                    <input type="text" id="char-clan" value="Zenin" oninput="marcarModificado()" class="w-full bg-slate-900/90 border border-slate-800 focus:border-purple-600 rounded-lg px-3 py-2 text-white mt-1 text-sm transition-all focus:outline-none" disabled>
+                                </div>
+                            </div>
+
+                            <!-- Progressão: Nível e Refino -->
+                            <div class="grid grid-cols-2 gap-4 pt-2">
+                                <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-900 text-center">
+                                    <span class="text-xs text-slate-400 uppercase block font-semibold mb-1">Level</span>
+                                    <div class="flex items-center justify-center gap-2">
+                                        <button onclick="alterarNivel(-1)" id="btn-lvl-dec" class="w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-md text-xs font-bold transition-all" disabled>-</button>
+                                        <span id="display-level" class="text-xl font-bold text-purple-300">1</span>
+                                        <button onclick="alterarNivel(1)" id="btn-lvl-inc" class="w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-md text-xs font-bold transition-all" disabled>+</button>
+                                    </div>
+                                </div>
+                                <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-900 text-center">
+                                    <span class="text-xs text-slate-400 uppercase block font-semibold mb-1">Refino</span>
+                                    <div class="flex items-center justify-center gap-2">
+                                        <button onclick="alterarRefino(-1)" id="btn-ref-dec" class="w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-md text-xs font-bold transition-all" disabled>-</button>
+                                        <span id="display-refine" class="text-xl font-bold text-pink-400">0</span>
+                                        <button onclick="alterarRefino(1)" id="btn-ref-inc" class="w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-md text-xs font-bold transition-all" disabled>+</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Atributos Físicos (Massa, Volume, Velocidade) -->
+                    <div class="bg-slate-950/80 border border-purple-950/50 rounded-2xl p-6">
+                        <h2 class="title-gothic text-purple-400 text-lg mb-4 flex items-center gap-2 border-b border-slate-900 pb-2">
+                            <i class="fa-solid fa-child-physical"></i> Propriedades Físicas
+                        </h2>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-slate-400 uppercase">Massa (kg)</span>
+                                    <span id="val-massa" class="text-purple-400 font-bold">75 kg</span>
+                                </div>
+                                <input type="range" id="input-massa" min="30" max="250" value="75" oninput="atualizarFisica()" class="w-full accent-purple-600 bg-slate-900 h-2 rounded-lg cursor-pointer" disabled>
+                                <span class="text-[10px] text-slate-500 block mt-1">*Massa afeta diretamente a conversão de HP máximo.</span>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-slate-400 uppercase">Volume (L)</span>
+                                    <span id="val-vl" class="text-purple-400 font-bold">70 L</span>
+                                </div>
+                                <input type="range" id="input-vl" min="10" max="200" value="70" oninput="atualizarFisica()" class="w-full accent-purple-600 bg-slate-900 h-2 rounded-lg cursor-pointer" disabled>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold mb-1">
+                                    <span class="text-slate-400 uppercase">Velocidade Base</span>
+                                    <span id="val-velocidade" class="text-purple-400 font-bold">12 km/h</span>
+                                </div>
+                                <input type="range" id="input-velocidade" min="5" max="50" value="12" oninput="atualizarFisica()" class="w-full accent-purple-600 bg-slate-900 h-2 rounded-lg cursor-pointer" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COLUNA CENTRAL: Status Principais & Combate (5 colunas) -->
+                <div class="lg:col-span-5 flex flex-col gap-6">
+                    
+                    <!-- Status Derivados e Combate -->
+                    <div class="bg-slate-950/80 border border-purple-950/50 rounded-2xl p-6 cursed-glow flex-1">
+                        <h2 class="title-gothic text-purple-400 text-lg mb-6 flex items-center gap-2 border-b border-slate-900 pb-2">
+                            <i class="fa-solid fa-shield-halved"></i> Energia & Parâmetros de Combate
+                        </h2>
+
+                        <div class="space-y-6">
+                            <!-- Vida (HP) com Rastreamento Atual vs Máximo -->
+                            <div class="bg-slate-900/30 p-4 rounded-xl border border-slate-900">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm font-bold uppercase tracking-wider text-red-400 flex items-center gap-2">
+                                        <i class="fa-solid fa-heart"></i> HP (Vida Atual / Max)
+                                    </span>
+                                    <div class="flex items-center gap-2 text-xs">
+                                        <span class="text-slate-500">Base:</span>
+                                        <input type="number" id="base-hp" value="100" oninput="recalcularTudo()" class="w-14 bg-slate-950 border border-slate-800 text-center rounded py-0.5 text-xs focus:outline-none" disabled>
+                                        <span class="font-bold text-red-400 text-sm ml-2">
+                                            <span id="current-hp-display">150</span>/<span id="total-hp">150</span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <!-- Rastreamento de Dano (Jogador pode mudar isso online!) -->
+                                <div class="flex gap-3 mb-3 items-center">
+                                    <label class="text-[10px] uppercase font-bold text-slate-500">Ajustar HP:</label>
+                                    <input type="range" id="input-current-hp" min="0" max="150" value="150" oninput="atualizarHpAtual()" class="flex-1 accent-red-600 bg-slate-900 h-1.5 rounded-lg cursor-pointer">
+                                </div>
+                                <div class="w-full bg-slate-950 h-3.5 rounded-full overflow-hidden p-0.5 border border-slate-800">
+                                    <div id="bar-hp" class="bg-gradient-to-r from-red-600 to-rose-500 h-full rounded-full transition-all duration-300" style="width: 100%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Energia Amaldiçoada (ENG) com Rastreamento Atual vs Máximo -->
+                            <div class="bg-slate-900/30 p-4 rounded-xl border border-slate-900">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm font-bold uppercase tracking-wider text-purple-400 flex items-center gap-2">
+                                        <i class="fa-solid fa-bolt"></i> ENG (Energia Atual / Max)
+                                    </span>
+                                    <div class="flex items-center gap-2 text-xs">
+                                        <span class="text-slate-500">Base:</span>
+                                        <input type="number" id="base-eng" value="60" oninput="recalcularTudo()" class="w-14 bg-slate-950 border border-slate-800 text-center rounded py-0.5 text-xs focus:outline-none" disabled>
+                                        <span class="font-bold text-purple-400 text-sm ml-2">
+                                            <span id="current-eng-display">60</span>/<span id="total-eng">60</span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <!-- Rastreamento de Gasto de Energia (Jogador pode mudar) -->
+                                <div class="flex gap-3 mb-3 items-center">
+                                    <label class="text-[10px] uppercase font-bold text-slate-500">Ajustar ENG:</label>
+                                    <input type="range" id="input-current-eng" min="0" max="60" value="60" oninput="atualizarEngAtual()" class="flex-1 accent-purple-600 bg-slate-900 h-1.5 rounded-lg cursor-pointer">
+                                </div>
+                                <div class="w-full bg-slate-950 h-3.5 rounded-full overflow-hidden p-0.5 border border-slate-800">
+                                    <div id="bar-eng" class="bg-gradient-to-r from-purple-600 to-fuchsia-500 h-full rounded-full transition-all duration-300" style="width: 100%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Atributos Ofensivo/Defensivo Básicos -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <!-- Ataque (ATK) -->
+                                <div class="bg-slate-900/30 p-4 rounded-xl border border-slate-900">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-xs font-bold uppercase text-orange-400 flex items-center gap-1.5">
+                                            <i class="fa-solid fa-burst"></i> ATK (Ataque)
+                                        </span>
+                                    </div>
+                                    <div class="flex items-baseline gap-2">
+                                        <input type="number" id="base-atk" value="15" oninput="recalcularTudo()" class="w-16 bg-slate-950 border border-slate-800 text-center rounded py-1 text-sm font-semibold focus:outline-none" disabled>
+                                        <span class="text-xs text-slate-500">Total: <strong class="text-orange-300" id="total-atk">15</strong></span>
+                                    </div>
+                                </div>
+
+                                <!-- Defesa (DFS) -->
+                                <div class="bg-slate-900/30 p-4 rounded-xl border border-slate-900">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-xs font-bold uppercase text-blue-400 flex items-center gap-1.5">
+                                            <i class="fa-solid fa-shield"></i> DFS (Defesa)
+                                        </span>
+                                    </div>
+                                    <div class="flex items-baseline gap-2">
+                                        <input type="number" id="base-dfs" value="10" oninput="recalcularTudo()" class="w-16 bg-slate-950 border border-slate-800 text-center rounded py-1 text-sm font-semibold focus:outline-none" disabled>
+                                        <span class="text-xs text-slate-500">Total: <strong class="text-blue-300" id="total-dfs">10</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Resumo Físico Calculado -->
+                            <div class="bg-slate-900/40 p-4 rounded-xl border border-slate-900 space-y-2">
+                                <span class="text-xs uppercase font-bold text-slate-400 block border-b border-slate-800 pb-1">Parâmetros de Movimento Ajustados</span>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-slate-400">Velocidade Final de Combate:</span>
+                                    <span class="font-bold text-emerald-400" id="final-speed">12 km/h</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-slate-400">Massa de Impacto (Inércia):</span>
+                                    <span class="font-bold text-emerald-400" id="final-inertia">75.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COLUNA DIREITA: Rolagens, Logs e Combate (3 colunas) -->
+                <div class="lg:col-span-3 flex flex-col gap-6">
+                    <!-- Arena de Testes de Dados -->
+                    <div class="bg-slate-950/80 border border-purple-950/50 rounded-2xl p-5 cursed-glow-red">
+                        <h2 class="title-gothic text-red-500 text-md mb-4 flex items-center gap-2 border-b border-slate-900 pb-2">
+                            <i class="fa-solid fa-dice-d20"></i> Conjuração & Dados
+                        </h2>
+
+                        <div class="grid grid-cols-1 gap-2.5">
+                            <button onclick="rolarTeste('iniciativa')" class="py-2.5 px-3 bg-slate-900 hover:bg-slate-850 border border-slate-800 rounded-lg text-sm font-semibold flex justify-between items-center transition-all duration-200">
+                                <span>Iniciativa (VEL)</span>
+                                <span class="text-emerald-400 font-mono text-xs"><i class="fa-solid fa-chevron-right"></i></span>
+                            </button>
+                            <button onclick="rolarTeste('ataque')" class="py-2.5 px-3 bg-slate-900 hover:bg-slate-850 border border-slate-800 rounded-lg text-sm font-semibold flex justify-between items-center transition-all duration-200">
+                                <span>Ataque Físico</span>
+                                <span class="text-orange-400 font-mono text-xs"><i class="fa-solid fa-chevron-right"></i></span>
+                            </button>
+                            <button onclick="rolarTeste('defesa')" class="py-2.5 px-3 bg-slate-900 hover:bg-slate-850 border border-slate-800 rounded-lg text-sm font-semibold flex justify-between items-center transition-all duration-200">
+                                <span>Teste de Defesa</span>
+                                <span class="text-blue-400 font-mono text-xs"><i class="fa-solid fa-chevron-right"></i></span>
+                            </button>
+
+                            <div class="border-t border-slate-900 my-2 pt-2"></div>
+
+                            <!-- Botão Especial de Kokusen (Black Flash) -->
+                            <button onclick="ativarKokusen()" class="py-3 px-3 bg-gradient-to-r from-red-600 to-black hover:from-red-500 hover:to-slate-950 text-white rounded-lg text-sm font-black uppercase tracking-wider transition-all duration-200 text-center cursed-glow-red flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-bolt-lightning text-yellow-400"></i> KOKUSEN (BLACK FLASH)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Histórico de Rolagens / Combate -->
+                    <div class="bg-slate-950/80 border border-purple-950/50 rounded-2xl p-5 flex-1 flex flex-col min-h-[250px] max-h-[350px]">
+                        <div class="flex justify-between items-center mb-3 pb-1 border-b border-slate-900">
+                            <h2 class="title-gothic text-slate-400 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-terminal"></i> Log de Energia
+                            </h2>
+                            <button onclick="limparLog()" class="text-[10px] text-slate-500 hover:text-slate-300 uppercase">Limpar</button>
+                        </div>
+                        
+                        <div id="combat-log" class="flex-1 overflow-y-auto space-y-2 text-xs font-mono text-slate-400 pr-1">
+                            <div class="text-slate-500">[Sistema] Iniciando painel de Jujutsu Chronicles...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEÇÃO INFERIOR: Técnicas Inatas & Arsenal -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                <!-- Técnicas Feiticeiras -->
+                <div class="bg-slate-950/80 border border-purple-950/50 rounded-2xl p-6">
+                    <div class="flex justify-between items-center mb-4 border-b border-slate-900 pb-2">
+                        <h2 class="title-gothic text-purple-400 text-lg flex items-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Técnicas Amaldiçoadas Inatas
+                    </h2>
+                        <button id="btn-add-technique" onclick="abrirModalTecnica()" class="text-xs bg-purple-900/40 hover:bg-purple-900/60 border border-purple-800 text-purple-200 px-2.5 py-1 rounded transition-all hidden">
+                            + Nova Técnica
+                        </button>
+                    </div>
+
+                    <!-- Lista de Técnicas Dinâmica -->
+                    <div id="tecnicas-lista" class="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+                        <!-- Gerado por JS -->
+                    </div>
+                </div>
+
+                <!-- Arsenal / Ferramentas Amaldiçoadas -->
+                <div class="bg-slate-950/80 border border-purple-950/50 rounded-2xl p-6">
+                    <div class="flex justify-between items-center mb-4 border-b border-slate-900 pb-2">
+                        <h2 class="title-gothic text-red-400 text-lg flex items-center gap-2">
+                            <i class="fa-solid fa-skull-crossbones"></i> Arsenal & Objetos Amaldiçoados
+                        </h2>
+                        <button id="btn-add-tool" onclick="abrirModalFerramenta()" class="text-xs bg-red-950/40 hover:bg-red-900/40 border border-red-900 text-red-200 px-2.5 py-1 rounded transition-all hidden">
+                            + Nova Ferramenta
+                        </button>
+                    </div>
+
+                    <!-- Lista de Ferramentas Dinâmica -->
+                    <div id="ferramentas-lista" class="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+                        <!-- Gerado por JS -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ABA 2: VIEW PAINEL DO MESTRE (MULTIPLAYER) -->
+        <div id="view-mestre" class="hidden space-y-6">
+            <!-- Tela de Bloqueio por PIN de Mestre -->
+            <div id="mestre-lock-screen" class="bg-slate-950/80 border border-purple-950/50 rounded-2xl p-8 max-w-md mx-auto text-center cursed-glow">
+                <span class="text-purple-500 text-5xl mb-4 block"><i class="fa-solid fa-users-gear animate-pulse"></i></span>
+                <h3 class="title-gothic text-xl text-purple-300 mb-2">Painel de Controle do Mestre</h3>
+                <p class="text-xs text-slate-400 mb-6">Insira a Chave Geral de Mestre para sincronizar e monitorar todas as fichas ativas nesta sessão de RPG.</p>
+                
+                <div class="space-y-4">
+                    <input type="password" id="input-master-key" placeholder="Chave de Acesso do Mestre" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-4 py-2 text-center text-sm font-mono tracking-wider focus:border-purple-500 focus:outline-none">
+                    <span class="text-[10px] text-slate-500 block">Dica: A chave padrão do mestre é <strong class="text-purple-400 font-mono">MESTREJJK</strong></span>
+                    <button onclick="desbloquearPainelMestre()" class="w-full py-2.5 bg-purple-700 hover:bg-purple-600 rounded-lg text-xs font-bold uppercase transition-all tracking-wider">Desbloquear Sessão</button>
+                </div>
+            </div>
+
+            <!-- Dashboard de Visualização Global de Jogadores -->
+            <div id="mestre-dashboard" class="hidden space-y-6">
+                <div class="bg-slate-950/80 border border-purple-950/45 rounded-xl p-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h3 class="title-gothic text-purple-300 text-lg">Universo Sincronizado do Mestre</h3>
+                        <p class="text-xs text-slate-400">Visualizando o status de todas as fichas conectadas à rede amaldiçoada em tempo real.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs text-slate-400 font-mono bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
+                            Fichas Ativas: <strong id="total-active-players" class="text-purple-400">0</strong>
+                        </span>
+                        <button onclick="bloquearPainelMestre()" class="px-3 py-1.5 bg-red-950/30 border border-red-900/50 hover:bg-red-900/40 text-red-400 text-xs rounded-lg transition-all">
+                            <i class="fa-solid fa-lock"></i> Bloquear Painel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Grid de Cards de Jogadores -->
+                <div id="grid-jogadores-mestre" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="text-center text-slate-500 py-12 col-span-full">
+                        <i class="fa-solid fa-circle-nodes animate-pulse text-2xl mb-2 block text-purple-600"></i> 
+                        Nenhuma alma amaldiçoada conectada. Peça para os jogadores sincronizarem ou crie novas fichas.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL DE CRIAÇÃO (SISTEMAS EXTRAS) -->
+    <div id="modal-container" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-950 border border-purple-950 rounded-2xl max-w-md w-full p-6 cursed-glow">
+            <h3 id="modal-title" class="title-gothic text-lg text-purple-400 mb-4 border-b border-slate-900 pb-2">Nova Entrada</h3>
+            
+            <input type="hidden" id="modal-type">
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 uppercase block mb-1">Nome</label>
+                    <input type="text" id="modal-input-name" placeholder="Ex: Nuvem Sombria" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-purple-600">
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-slate-400 uppercase block mb-1">Descrição</label>
+                    <textarea id="modal-input-desc" placeholder="Descreva os efeitos mágicos ou físicos..." class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-white text-sm h-24 resize-none focus:outline-none focus:border-purple-600"></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-6">
+                <button onclick="fecharModal()" class="px-4 py-2 text-sm bg-slate-900 border border-slate-800 rounded-lg hover:bg-slate-800 transition-all">Cancelar</button>
+                <button onclick="salvarModalEntrada()" class="px-5 py-2 text-sm bg-purple-700 hover:bg-purple-600 rounded-lg font-semibold transition-all">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Módulos do Firebase para Conexão Online -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables for Firebase access across user scripts
+        window.F_app = null;
+        window.F_db = null;
+        window.F_auth = null;
+        window.appId = null;
+        window.firebaseReady = false;
+
+        window.initFirebase = async function() {
+            try {
+                const config = typeof __firebase_config !== 'undefined' ? 
+                    (typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config) : {
+                    apiKey: "",
+                    authDomain: "jjk-rpg-default.firebaseapp.com",
+                    projectId: "jjk-rpg-default",
+                    storageBucket: "jjk-rpg-default.appspot.com",
+                    messagingSenderId: "12345678",
+                    appId: "1:12345678:web:1234"
+                };
+
+                // Guardrail: If no API key is specified or it is default/blank, trigger local offline flow immediately
+                if (!config.apiKey || config.apiKey === "") {
+                    throw new Error("Credenciais do Firebase estão vazias ou ausentes.");
+                }
+
+                window.appId = typeof __app_id !== 'undefined' ? __app_id : 'default-jjk-rpg-app';
+                window.F_app = initializeApp(config);
+                window.F_db = getFirestore(window.F_app);
+                window.F_auth = getAuth(window.F_app);
+
+                // Authentication Promise Setup
+                let authPromise;
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    authPromise = signInWithCustomToken(window.F_auth, __initial_auth_token);
+                } else {
+                    authPromise = signInAnonymously(window.F_auth);
+                }
+
+                await authPromise;
+                window.firebaseReady = true;
+
+                // Esconde o loader do portal e exibe as ações
+                document.getElementById('portal-loading').classList.add('hidden');
+                document.getElementById('portal-actions').classList.remove('hidden');
+                
+                showToast("🔥 Sincronizado com a barreira Jujutsu!", "fa-solid fa-cloud-bolt");
+
+                // Auto-reconecta se houver dados salvos no localStorage
+                const savedSheetId = localStorage.getItem('jjk_current_sheet_id');
+                if (savedSheetId) {
+                    document.getElementById('portal-screen').classList.add('hidden');
+                    window.recuperarFichaExistente(savedSheetId);
+                }
+            } catch (err) {
+                console.warn("Falha ao conectar no servidor Firebase de Jujutsu. Ativando barreira local offline...", err);
+                window.firebaseReady = false;
+                window.ativarModoLocalFallback();
+            }
+        };
+
+        window.getFirestoreInstance = () => window.F_db;
+        window.getAuthInstance = () => window.F_auth;
+        window.getAppIdInstance = () => window.appId;
+
+        // Permitir que o Painel do Mestre ouça toda a coleção de fichas sob o escopo deste App
+        window.escutarTodasAsFichas = function(callback, errorCallback) {
+            const db = window.F_db;
+            const appId = window.appId;
+            if (!db) return null;
+            
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'sheets');
+            return onSnapshot(colRef, callback, errorCallback);
+        };
+
+        window.atualizarFichaMestreRapido = async function(sheetId, novosDados) {
+            const db = window.F_db;
+            const appId = window.appId;
+            if (!db) return;
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'sheets', sheetId);
+            await updateDoc(docRef, novosDados);
+        };
+
+        // Trigger safe loading without top-level await crashes
+        window.initFirebase().catch(e => {
+            console.error("Erro geral de carregamento Firebase:", e);
+            window.ativarModoLocalFallback();
+        });
+    </script>
+
+    <!-- Script de Regras de Jogo e Interface -->
+    <script>
+        let level = 1;
+        let refino = 0;
+        let roleMode = 'player'; // 'player' ou 'admin'
+        let currentSheetId = null;
+        let currentUsername = "";
+        let onlineActive = false;
+        let unsubscribeSheet = null;
+        let unsubscribeAllSheets = null; // Escuta de todas as fichas para o Mestre
+        let pendingConfirmAction = null;
+        let blockSyncBack = false; // Bloqueio temporário para não loopar updates locais
+
+        let adminPin = "1234"; // PIN padrão para edição
+        let masterPinGeral = "MESTREJJK"; // Chave de acesso geral do mestre
+        let isMasterUnlocked = false;
+
+        let tecnicas = [
+            { id: 1, nome: "Punho Divergente", desc: "A energia amaldiçoada flui com atraso, causando um segundo impacto devastador logo após o golpe físico original." },
+            { id: 2, nome: "Cães Divinos (Gyokken)", desc: "Invoca shikigamis lobo que caçam inimigos e rastreiam fontes amaldiçoadas." }
+        ];
+
+        let ferramentas = [
+            { id: 1, nome: "Nuvem Brincalhona (Yuuga)", desc: "Bastão de três seções de Grau Especial. Seu poder ofensivo depende unicamente da força física bruta do usuário." }
+        ];
+
+        let logsSincronizados = [
+            { id: 1, tempo: obterHoraAtual(), texto: "Ficha local de Jujutsu criada." }
+        ];
+
+        // Mapeamento local para simular rede de banco de dados caso esteja offline
+        let simuladorBancoLocal = {};
+
+        window.onload = function() {
+            carregarDadosLocais();
+            atualizarLayoutCargo();
+            recalcularTudo();
+            
+            // Timeout de segurança: Se em 4 segundos a barreira não inicializar, oferece botão local
+            setTimeout(() => {
+                if (!window.firebaseReady && document.getElementById('portal-actions').classList.contains('hidden')) {
+                    const localBtn = document.getElementById('btn-force-local');
+                    const textEl = document.getElementById('portal-loading-text');
+                    if (localBtn && textEl) {
+                        localBtn.classList.remove('hidden');
+                        textEl.innerText = "Conexão lenta ou bloqueada por segurança.";
+                    }
+                }
+            }, 3000);
+        };
+
+        // Ativação forçada do modo local sem travar a interface
+        window.ativarModoLocalFallback = function() {
+            window.firebaseReady = false;
+            onlineActive = false;
+            
+            // Renderiza botões do portal
+            document.getElementById('portal-loading').classList.add('hidden');
+            document.getElementById('portal-actions').classList.remove('hidden');
+            
+            // Informa status offline
+            document.getElementById('conn-indicator').className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse";
+            document.getElementById('conn-text').innerText = "Modo Local Ativo (Offline)";
+            document.getElementById('conn-text').className = "text-xs font-semibold text-amber-400";
+            
+            showToast("🔒 Modo Offline ativado. Suas fichas serão salvas no navegador!", "fa-solid fa-shield");
+            
+            // Carrega ficha local se houver
+            const savedSheetId = localStorage.getItem('jjk_current_sheet_id');
+            if (savedSheetId) {
+                document.getElementById('portal-screen').classList.add('hidden');
+                recuperarFichaExistente(savedSheetId);
+            }
+        };
+
+        function ativarSessaoLocalManual() {
+            window.ativarModoLocalFallback();
+        }
+
+        // PORTAL TAB CONTROL
+        function switchPortalTab(tab) {
+            const tabs = ['create', 'sync', 'mestre'];
+            tabs.forEach(t => {
+                const button = document.getElementById(`tab-portal-${t}`);
+                const form = document.getElementById(`form-portal-${t}`);
+                if (t === tab) {
+                    button.className = "flex-1 py-2 text-center font-bold border-b-2 border-purple-500 text-purple-300 focus:outline-none";
+                    form.classList.remove('hidden');
+                } else {
+                    button.className = "flex-1 py-2 text-center font-bold text-slate-400 hover:text-slate-200 focus:outline-none";
+                    form.classList.add('hidden');
+                }
+            });
+        }
+
+        // ALTERNAR VISÕES (Ficha do Jogador vs Painel do Mestre)
+        function alternarVisao(tela) {
+            const tabFicha = document.getElementById('tab-ficha');
+            const tabMestre = document.getElementById('tab-mestre');
+            const viewFicha = document.getElementById('view-ficha');
+            const viewMestre = document.getElementById('view-mestre');
+
+            if (tela === 'ficha') {
+                tabFicha.className = "px-6 py-3 border-b-2 border-purple-500 font-bold text-sm text-purple-300 transition-all flex items-center gap-2 shrink-0 focus:outline-none";
+                tabMestre.className = "px-6 py-3 border-b-2 border-transparent hover:text-purple-400 text-slate-400 font-bold text-sm transition-all flex items-center gap-2 shrink-0 focus:outline-none";
+                viewFicha.classList.remove('hidden');
+                viewFicha.classList.add('block');
+                viewMestre.classList.remove('block');
+                viewMestre.classList.add('hidden');
+            } else {
+                tabMestre.className = "px-6 py-3 border-b-2 border-purple-500 font-bold text-sm text-purple-300 transition-all flex items-center gap-2 shrink-0 focus:outline-none";
+                tabFicha.className = "px-6 py-3 border-b-2 border-transparent hover:text-purple-400 text-slate-400 font-bold text-sm transition-all flex items-center gap-2 shrink-0 focus:outline-none";
+                viewFicha.classList.remove('block');
+                viewFicha.classList.add('hidden');
+                viewMestre.classList.remove('hidden');
+                viewMestre.classList.add('block');
+                
+                // Inicializa a tela de lock do mestre
+                if (isMasterUnlocked) {
+                    document.getElementById('mestre-lock-screen').classList.add('hidden');
+                    document.getElementById('mestre-dashboard').classList.remove('hidden');
+                } else {
+                    document.getElementById('mestre-lock-screen').classList.remove('hidden');
+                    document.getElementById('mestre-dashboard').classList.add('hidden');
+                }
+            }
+        }
+
+        // DESBLOQUEAR PAINEL DO MESTRE MULTIPLAYER
+        function desbloquearPainelMestre() {
+            const chave = document.getElementById('input-master-key').value.trim().toUpperCase();
+            if (chave === masterPinGeral) {
+                isMasterUnlocked = true;
+                document.getElementById('mestre-lock-screen').classList.add('hidden');
+                document.getElementById('mestre-dashboard').classList.remove('hidden');
+                showToast("🔮 Universo amaldiçoado mapeado com sucesso! Painel liberado.", "fa-solid fa-users-gear");
+                ativarEscutaMestreTodasAsFichas();
+            } else {
+                showToast("⚠️ Chave de acesso do mestre incorreta!", "fa-solid fa-triangle-exclamation");
+            }
+        }
+
+        function bloquearPainelMestre() {
+            isMasterUnlocked = false;
+            document.getElementById('input-master-key').value = "";
+            document.getElementById('mestre-lock-screen').classList.remove('hidden');
+            document.getElementById('mestre-dashboard').classList.add('hidden');
+            
+            if (unsubscribeAllSheets) {
+                unsubscribeAllSheets();
+                unsubscribeAllSheets = null;
+            }
+            showToast("🔒 Painel do Mestre bloqueado com sucesso.", "fa-solid fa-lock");
+        }
+
+        function ativarEscutaMestreTodasAsFichas() {
+            if (unsubscribeAllSheets) {
+                unsubscribeAllSheets();
+            }
+
+            // Fallback Offline: Carrega do simulador local se o Firebase não estiver ativo
+            if (!window.firebaseReady) {
+                const dbLocalRaw = localStorage.getItem('jjk_simulador_banco_local') || "{}";
+                simuladorBancoLocal = JSON.parse(dbLocalRaw);
+                renderizarPainelMestreLocal();
+                return;
+            }
+
+            if (typeof window.escutarTodasAsFichas !== 'function') {
+                showToast("Servidor de dados não inicializado completamente.", "fa-solid fa-circle-exclamation");
+                return;
+            }
+
+            unsubscribeAllSheets = window.escutarTodasAsFichas((snapshot) => {
+                const totalFichas = snapshot.size;
+                document.getElementById('total-active-players').innerText = totalFichas;
+                
+                const grid = document.getElementById('grid-jogadores-mestre');
+                grid.innerHTML = "";
+
+                if (totalFichas === 0) {
+                    grid.innerHTML = `
+                        <div class="text-center text-slate-500 py-12 col-span-full">
+                            <i class="fa-solid fa-circle-nodes text-2xl mb-2 block"></i> Nenhuma ficha encontrada na nuvem.
+                        </div>`;
+                    return;
+                }
+
+                snapshot.forEach((docSnap) => {
+                    const dados = docSnap.data();
+                    const fid = docSnap.id;
+                    inserirCardJogadorMestre(grid, dados, fid);
+                });
+            }, (error) => {
+                console.error("Erro na escuta coletiva de fichas: ", error);
+            });
+        }
+
+        function renderizarPainelMestreLocal() {
+            const grid = document.getElementById('grid-jogadores-mestre');
+            grid.innerHTML = "";
+            
+            const keys = Object.keys(simuladorBancoLocal);
+            document.getElementById('total-active-players').innerText = keys.length;
+
+            if (keys.length === 0) {
+                grid.innerHTML = `
+                    <div class="text-center text-slate-500 py-12 col-span-full">
+                        <i class="fa-solid fa-circle-nodes text-2xl mb-2 block"></i> Nenhuma ficha cadastrada neste navegador.
+                    </div>`;
+                return;
+            }
+
+            keys.forEach(fid => {
+                const dados = simuladorBancoLocal[fid];
+                inserirCardJogadorMestre(grid, dados, fid);
+            });
+        }
+
+        function inserirCardJogadorMestre(container, dados, fid) {
+            const m = dados.massa || 75;
+            const l = dados.level || 1;
+            const r = dados.refino || 0;
+            
+            const hpMax = Math.round((dados.baseHp || 100) + (l * 12) + (m * 0.8));
+            const engMax = Math.round((dados.baseEng || 60) + (l * 6) * (1 + (r * 0.2)));
+            
+            const hpPct = Math.max(0, Math.min(100, ((dados.currentHp || hpMax) / hpMax) * 100));
+            const engPct = Math.max(0, Math.min(100, ((dados.currentEng || engMax) / engMax) * 100));
+
+            const card = document.createElement('div');
+            card.className = "bg-slate-900/90 border border-slate-800 rounded-2xl p-5 hover:border-purple-600/50 transition-all flex flex-col justify-between";
+            card.innerHTML = `
+                <div>
+                    <div class="flex justify-between items-start mb-3 border-b border-slate-800 pb-2">
+                        <div>
+                            <h4 class="font-bold text-purple-300 title-gothic text-base">${dados.nome || 'Feiticeiro Sem Nome'}</h4>
+                            <p class="text-[10px] text-slate-400 uppercase font-mono">Jogador: <strong class="text-pink-400">${dados.usuario || 'Sem Registro'}</strong></p>
+                            <p class="text-[10px] text-slate-500 uppercase font-mono">${dados.clã || 'Sem Clã'} • Lvl ${l} • Refino ${r}</p>
+                        </div>
+                        <span class="bg-purple-950/80 text-purple-400 text-[10px] font-bold px-2 py-0.5 rounded border border-purple-900/40">${fid}</span>
+                    </div>
+
+                    <!-- HP e ENG para o Mestre Monitorar -->
+                    <div class="space-y-3 mb-4">
+                        <div>
+                            <div class="flex justify-between text-[11px] mb-1">
+                                <span class="text-red-400 font-bold"><i class="fa-solid fa-heart"></i> HP: ${dados.currentHp ?? hpMax}/${hpMax}</span>
+                                <div class="flex gap-1">
+                                    <button onclick="ajustarStatusJogadorRapido('${fid}', 'currentHp', -10, ${hpMax})" class="px-1.5 bg-red-950 text-red-300 rounded hover:bg-red-900 text-[10px] focus:outline-none">-10</button>
+                                    <button onclick="ajustarStatusJogadorRapido('${fid}', 'currentHp', 10, ${hpMax})" class="px-1.5 bg-emerald-950 text-emerald-300 rounded hover:bg-emerald-900 text-[10px] focus:outline-none">+10</button>
+                                </div>
+                            </div>
+                            <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800 p-0.5">
+                                <div class="bg-gradient-to-r from-red-600 to-rose-500 h-full rounded-full transition-all duration-300" style="width: ${hpPct}%"></div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-[11px] mb-1">
+                                <span class="text-purple-400 font-bold"><i class="fa-solid fa-bolt"></i> ENG: ${dados.currentEng ?? engMax}/${engMax}</span>
+                                <div class="flex gap-1">
+                                    <button onclick="ajustarStatusJogadorRapido('${fid}', 'currentEng', -5, ${engMax})" class="px-1.5 bg-purple-950 text-purple-300 rounded hover:bg-purple-900 text-[10px] focus:outline-none">-5</button>
+                                    <button onclick="ajustarStatusJogadorRapido('${fid}', 'currentEng', 5, ${engMax})" class="px-1.5 bg-emerald-950 text-emerald-300 rounded hover:bg-emerald-900 text-[10px] focus:outline-none">+5</button>
+                                </div>
+                            </div>
+                            <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-800 p-0.5">
+                                <div class="bg-gradient-to-r from-purple-600 to-fuchsia-500 h-full rounded-full transition-all duration-300" style="width: ${engPct}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ações Rápidas do Mestre para com o Jogador -->
+                <div class="border-t border-slate-800/80 pt-3 mt-2 flex flex-col gap-2">
+                    <div class="flex gap-1.5">
+                        <input type="text" id="log-msg-${fid}" placeholder="Mensagem de mestre..." class="bg-slate-950 border border-slate-800 text-slate-300 text-[10px] px-2 py-1 rounded flex-1 focus:outline-none focus:border-purple-600">
+                        <button onclick="enviarLogJogadorRapido('${fid}')" class="p-1 px-2.5 bg-purple-800 hover:bg-purple-700 text-white rounded text-[10px] font-bold focus:outline-none"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mt-1">
+                        <button onclick="carregarFichaNoVisualizador('${fid}', '${dados.adminPin || ''}')" class="w-full py-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-purple-900 text-purple-400 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 focus:outline-none">
+                            <i class="fa-solid fa-folder-open"></i> Abrir Ficha
+                        </button>
+                        <button onclick="expurgarFichaOnlineMestre('${fid}')" class="w-full py-1.5 bg-red-950/20 hover:bg-red-950/60 text-red-400 border border-red-950 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1 focus:outline-none">
+                            <i class="fa-solid fa-trash-can"></i> Expurgar
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        }
+
+        async function ajustarStatusJogadorRapido(sheetId, campo, alteracao, maximo) {
+            try {
+                if (!window.firebaseReady) {
+                    // Simulação Offline
+                    if (simuladorBancoLocal[sheetId]) {
+                        let valorAtual = simuladorBancoLocal[sheetId][campo] !== undefined ? simuladorBancoLocal[sheetId][campo] : maximo;
+                        simuladorBancoLocal[sheetId][campo] = Math.max(0, Math.min(maximo, valorAtual + alteracao));
+                        
+                        const acao = alteracao > 0 ? "curou/recuperou" : "perdeu";
+                        const iconeLog = campo === 'currentHp' ? "❤️ [Vida]" : "⚡ [Energia]";
+                        simuladorBancoLocal[sheetId].logs.unshift({
+                            id: Date.now(),
+                            tempo: obterHoraAtual(),
+                            texto: `📢 O Mestre ${acao} ${Math.abs(alteracao)} pontos de seu status ${iconeLog}.`
+                        });
+                        
+                        localStorage.setItem('jjk_simulador_banco_local', JSON.stringify(simuladorBancoLocal));
+                        renderizarPainelMestreLocal();
+                        
+                        if (currentSheetId === sheetId) {
+                            carregarDadosDoObjeto(simuladorBancoLocal[sheetId]);
+                        }
+                        showToast(`Status atualizado localmente!`, "fa-solid fa-circle-check");
+                    }
+                    return;
+                }
+
+                const db = window.getFirestoreInstance();
+                const appId = window.getAppIdInstance();
+                if (!db) return;
+
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'sheets', sheetId);
+                const docSnap = await getDoc(docRef);
+                if (!docSnap.exists()) return;
+
+                const dados = docSnap.data();
+                let valorAtual = dados[campo] !== undefined ? dados[campo] : maximo;
+                const novoValor = Math.max(0, Math.min(maximo, valorAtual + alteracao));
+                
+                const logs = dados.logs || [];
+                const acao = alteracao > 0 ? "curou/recuperou" : "perdeu";
+                const iconeLog = campo === 'currentHp' ? "❤️ [Vida]" : "⚡ [Energia]";
+                logs.unshift({
+                    id: Date.now(),
+                    tempo: obterHoraAtual(),
+                    texto: `📢 O Mestre ${acao} ${Math.abs(alteracao)} pontos de seu status ${iconeLog}.`
+                });
+
+                await updateDoc(docRef, {
+                    [campo]: novoValor,
+                    logs: logs.slice(0, 50)
+                });
+
+                showToast(`Status atualizado para a ficha ${sheetId}!`, "fa-solid fa-circle-check");
+            } catch (err) {
+                console.error(err);
+                showToast("Erro ao ajustar status do jogador.", "fa-solid fa-triangle-exclamation");
+            }
+        }
+
+        async function enviarLogJogadorRapido(sheetId) {
+            const inputEl = document.getElementById(`log-msg-${sheetId}`);
+            const msg = inputEl.value.trim();
+            if (!msg) return;
+
+            try {
+                if (!window.firebaseReady) {
+                    // Simulação Offline
+                    if (simuladorBancoLocal[sheetId]) {
+                        simuladorBancoLocal[sheetId].logs.unshift({
+                            id: Date.now(),
+                            tempo: obterHoraAtual(),
+                            texto: `🔮 <strong>[Narrador]:</strong> ${msg}`
+                        });
+                        localStorage.setItem('jjk_simulador_banco_local', JSON.stringify(simuladorBancoLocal));
+                        inputEl.value = "";
+                        renderizarPainelMestreLocal();
+                        
+                        if (currentSheetId === sheetId) {
+                            carregarDadosDoObjeto(simuladorBancoLocal[sheetId]);
+                        }
+                        showToast("Mensagem de Narrador enviada localmente!", "fa-solid fa-envelope");
+                    }
+                    return;
+                }
+
+                const db = window.getFirestoreInstance();
+                const appId = window.getAppIdInstance();
+                if (!db) return;
+
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'sheets', sheetId);
+                const docSnap = await getDoc(docRef);
+                if (!docSnap.exists()) return;
+
+                const dados = docSnap.data();
+                const logs = dados.logs || [];
+                logs.unshift({
+                    id: Date.now(),
+                    tempo: obterHoraAtual(),
+                    texto: `🔮 <strong>[Narrador]:</strong> ${msg}`
+                });
+
+                await updateDoc(docRef, {
+                    logs: logs.slice(0, 50)
+                });
+
+                inputEl.value = "";
+                showToast(`Log enviado à ficha de ${dados.nome}!`, "fa-solid fa-envelope");
+            } catch (err) {
+                console.error(err);
+                showToast("Falha ao registrar mensagem no log.", "fa-solid fa-triangle-exclamation");
+            }
+        }
+
+        async function carregarFichaNoVisualizador(sheetId, pinFicha) {
+            try {
+                await recuperarFichaExistente(sheetId);
+                
+                if (pinFicha) {
+                    document.getElementById('input-admin-pin').value = pinFicha;
+                    alternarCargo();
+                }
+
+                document.getElementById('portal-screen').classList.add('hidden');
+                alternarVisao('ficha');
+            } catch (e) {
+                showToast("Falha ao carregar ficha selecionada.", "fa-solid fa-triangle-exclamation");
+            }
+        }
+
+        function expurgarFichaOnlineMestre(sheetId) {
+            openConfirmModal(`Deseja expurgar e deletar permanentemente a ficha ${sheetId} do servidor?`, async () => {
+                try {
+                    if (!window.firebaseReady) {
+                        delete simuladorBancoLocal[sheetId];
+                        localStorage.setItem('jjk_simulador_banco_local', JSON.stringify(simuladorBancoLocal));
+                        renderPainelMestreSeNecessario();
+                        showToast("Ficha local expurgada!", "fa-solid fa-trash");
+                        return;
+                    }
+
+                    const db = window.getFirestoreInstance();
+                    const appId = window.getAppIdInstance();
+                    if (!db) return;
+
+                    await window.atualizarFichaMestreRapido(sheetId, {
+                        nome: "⚠️ REGISTRO EXPURGADO",
+                        usuario: "Deletado",
+                        logs: [{ id: Date.now(), tempo: obterHoraAtual(), texto: "Esta ficha foi expurgada pelo mestre geral de Jujutsu." }]
+                    });
+                    
+                    showToast("Ficha expurgada com sucesso!", "fa-solid fa-circle-nodes");
+                } catch (err) {
+                    console.error(err);
+                    showToast("Erro ao tentar desativar a ficha.", "fa-solid fa-triangle-exclamation");
+                }
+            });
+        }
+
+        function renderPainelMestreSeNecessario() {
+            if (isMasterUnlocked) {
+                if (window.firebaseReady) {
+                    // Será gerenciado pelo onSnapshot do Firebase
+                } else {
+                    renderizarPainelMestreLocal();
+                }
+            }
+        }
+
+        // Custom notification system
+        function showToast(message, iconClass = "fa-solid fa-circle-info") {
+            const toast = document.getElementById('toast-box');
+            document.getElementById('toast-message').innerText = message;
+            document.getElementById('toast-icon').innerHTML = `<i class="${iconClass}"></i>`;
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 4500);
+        }
+
+        function openConfirmModal(text, actionCallback) {
+            document.getElementById('confirm-text').innerText = text;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            pendingConfirmAction = actionCallback;
+        }
+
+        function closeConfirmModal(confirmed) {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            if (confirmed && pendingConfirmAction) {
+                pendingConfirmAction();
+            }
+            pendingConfirmAction = null;
+        }
+
+        function alterarNivel(qtd) {
+            if (roleMode !== 'admin') return;
+            level = Math.max(1, Math.min(100, level + qtd));
+            document.getElementById('display-level').innerText = level;
+            recalcularTudo();
+            marcarModificado();
+        }
+
+        function alterarRefino(qtd) {
+            if (roleMode !== 'admin') return;
+            refino = Math.max(0, Math.min(10, refino + qtd));
+            document.getElementById('display-refine').innerText = refino;
+            recalcularTudo();
+            marcarModificado();
+        }
+
+        function atualizarFisica() {
+            const massa = document.getElementById('input-massa').value;
+            const vl = document.getElementById('input-vl').value;
+            const vel = document.getElementById('input-velocidade').value;
+
+            document.getElementById('val-massa').innerText = `${massa} kg`;
+            document.getElementById('val-vl').innerText = `${vl} L`;
+            document.getElementById('val-velocidade').innerText = `${vel} km/h`;
+
+            recalcularTudo();
+            marcarModificado();
+        }
+
+        function recalcularTudo() {
+            const baseHp = parseInt(document.getElementById('base-hp').value) || 0;
+            const baseEng = parseInt(document.getElementById('base-eng').value) || 0;
+            const baseAtk = parseInt(document.getElementById('base-atk').value) || 0;
+            const baseDfs = parseInt(document.getElementById('base-dfs').value) || 0;
+
+            const massa = parseInt(document.getElementById('input-massa').value) || 0;
+            const velBase = parseInt(document.getElementById('input-velocidade').value) || 0;
+
+            const hpFinal = Math.round(baseHp + (level * 12) + (massa * 0.8));
+            const oldHpMax = parseInt(document.getElementById('total-hp').innerText) || hpFinal;
+            document.getElementById('total-hp').innerText = hpFinal;
+
+            const sliderHp = document.getElementById('input-current-hp');
+            sliderHp.max = hpFinal;
+            if (sliderHp.value == oldHpMax || sliderHp.value > hpFinal) {
+                sliderHp.value = hpFinal;
+            }
+            document.getElementById('current-hp-display').innerText = sliderHp.value;
+            atualizarHpBar(sliderHp.value, hpFinal);
+
+            const engFinal = Math.round(baseEng + (level * 6) * (1 + (refino * 0.2)));
+            const oldEngMax = parseInt(document.getElementById('total-eng').innerText) || engFinal;
+            document.getElementById('total-eng').innerText = engFinal;
+
+            const sliderEng = document.getElementById('input-current-eng');
+            sliderEng.max = engFinal;
+            if (sliderEng.value == oldEngMax || sliderEng.value > engFinal) {
+                sliderEng.value = engFinal;
+            }
+            document.getElementById('current-eng-display').innerText = sliderEng.value;
+            atualizarEngBar(sliderEng.value, engFinal);
+
+            const atkFinal = Math.round(baseAtk + (level * 2) + (refino * 3));
+            const dfsFinal = Math.round(baseDfs + (level * 1.5) + (refino * 1.5));
+            document.getElementById('total-atk').innerText = atkFinal;
+            document.getElementById('total-dfs').innerText = dfsFinal;
+
+            const velFinal = Math.round(velBase + (level * 0.4) - (massa * 0.05));
+            document.getElementById('final-speed').innerText = `${velFinal} km/h`;
+
+            const inercia = ((massa * velFinal) / 100).toFixed(2);
+            document.getElementById('final-inertia').innerText = inercia;
+
+            desenharListas();
+        }
+
+        function atualizarHpAtual() {
+            const val = document.getElementById('input-current-hp').value;
+            const max = parseInt(document.getElementById('total-hp').innerText);
+            document.getElementById('current-hp-display').innerText = val;
+            atualizarHpBar(val, max);
+            marcarModificado();
+        }
+
+        function atualizarHpBar(val, max) {
+            const pct = Math.max(0, Math.min(100, (val / max) * 100));
+            document.getElementById('bar-hp').style.width = pct + "%";
+        }
+
+        function atualizarEngAtual() {
+            const val = document.getElementById('input-current-eng').value;
+            const max = parseInt(document.getElementById('total-eng').innerText);
+            document.getElementById('current-eng-display').innerText = val;
+            atualizarEngBar(val, max);
+            marcarModificado();
+        }
+
+        function atualizarEngBar(val, max) {
+            const pct = Math.max(0, Math.min(100, (val / max) * 100));
+            document.getElementById('bar-eng').style.width = pct + "%";
+        }
+
+        function alternarCargo() {
+            const pinDigitado = document.getElementById('input-admin-pin').value;
+            
+            if (roleMode === 'player') {
+                if (pinDigitado === adminPin) {
+                    roleMode = 'admin';
+                    document.getElementById('input-admin-pin').value = "";
+                    showToast("👑 Modo de Administrador Ativado! Ficha configurável.", "fa-solid fa-crown");
+                } else {
+                    showToast("⚠️ PIN incorreto! Solicite as credenciais com seu mestre.", "fa-solid fa-circle-exclamation");
+                }
+            } else {
+                roleMode = 'player';
+                showToast("👤 Modo Jogador Restabelecido.", "fa-solid fa-user");
+            }
+            atualizarLayoutCargo();
+        }
+
+        function atualizarLayoutCargo() {
+            const inputsAdmin = [
+                'char-name', 'char-clan', 'char-grade', 'base-hp', 'base-eng', 'base-atk', 
+                'base-dfs', 'input-massa', 'input-vl', 'input-velocidade'
+            ];
+
+            const isAdmin = (roleMode === 'admin');
+
+            inputsAdmin.forEach(id => {
+                document.getElementById(id).disabled = !isAdmin;
+            });
+
+            document.getElementById('btn-lvl-dec').disabled = !isAdmin;
+            document.getElementById('btn-lvl-inc').disabled = !isAdmin;
+            document.getElementById('btn-ref-dec').disabled = !isAdmin;
+            document.getElementById('btn-ref-inc').disabled = !isAdmin;
+
+            if (isAdmin) {
+                document.getElementById('btn-add-technique').classList.remove('hidden');
+                document.getElementById('btn-add-tool').classList.remove('hidden');
+                document.getElementById('display-role').innerText = "Modo Mestre / Administrador (Total)";
+                document.getElementById('display-role').className = "text-sm font-bold text-red-500 uppercase";
+                document.getElementById('role-badge-icon').className = "text-xl text-red-500";
+                document.getElementById('btn-toggle-role').innerHTML = '<i class="fa-solid fa-user"></i> Retornar a Jogador';
+            } else {
+                document.getElementById('btn-add-technique').classList.add('hidden');
+                document.getElementById('btn-add-tool').classList.add('hidden');
+                document.getElementById('display-role').innerText = "Modo Jogador (Rastreamento de Recursos)";
+                document.getElementById('display-role').className = "text-sm font-bold text-blue-400 uppercase";
+                document.getElementById('role-badge-icon').className = "text-xl text-blue-400";
+                document.getElementById('btn-toggle-role').innerHTML = '<i class="fa-solid fa-key"></i> Liberar Edição';
+            }
+
+            desenharListas();
+        }
+
+        // SISTEMA DE COMBATE & DADOS
+        function rolarTeste(tipo) {
+            const d20 = Math.floor(Math.random() * 20) + 1;
+            let modificador = 0;
+            let mensagem = "";
+
+            const atk = parseInt(document.getElementById('total-atk').innerText);
+            const dfs = parseInt(document.getElementById('total-dfs').innerText);
+            const vel = parseInt(document.getElementById('final-speed').innerText);
+
+            if (tipo === 'iniciativa') {
+                modificador = Math.round(vel / 2);
+                const total = d20 + modificador;
+                mensagem = `🏃‍♂️ Iniciativa: Rolagem [${d20}] + Ajuste [${modificador}] = Total ${total}!`;
+            } else if (tipo === 'ataque') {
+                modificador = atk;
+                const total = d20 + modificador;
+                mensagem = `⚔️ Ataque: Rolagem [${d20}] + ATK [${modificador}] = Total ${total}!`;
+                if (d20 === 20) mensagem += ` ⚡ ACERTO CRÍTICO!`;
+            } else if (tipo === 'defesa') {
+                modificador = dfs;
+                const total = d20 + modificador;
+                mensagem = `🛡️ Defesa: Rolagem [${d20}] + DFS [${modificador}] = Total ${total}!`;
+            }
+
+            adicionarAoLog(mensagem);
+        }
+
+        function ativarKokusen() {
+            tocarSomCursed();
+
+            const wrapper = document.getElementById('main-wrapper');
+            document.body.classList.add('black-flash-active');
+            wrapper.classList.add('shake-active');
+
+            setTimeout(() => {
+                document.body.classList.remove('black-flash-active');
+                wrapper.classList.remove('shake-active');
+            }, 600);
+
+            const chance = Math.floor(Math.random() * 5) + 1;
+            const atk = parseInt(document.getElementById('total-atk').innerText);
+
+            if (chance === 5) {
+                const danoKokusen = Math.round(Math.pow(atk, 2.5) / 10);
+                adicionarAoLog(`⚡⚡ KOKUSEN (BLACK FLASH)! Faíscas negras explodem! Dano devastador infligido: [${danoKokusen}] ⚡⚡`);
+            } else {
+                adicionarAoLog(`⚠️ A energia amaldiçoada fluiu em fração de segundos incorreta. Black Flash falhou.`);
+            }
+        }
+
+        function tocarSomCursed() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(10, audioCtx.currentTime + 0.5);
+                
+                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            } catch(e) {}
+        }
+
+        function adicionarAoLog(texto) {
+            const tempo = obterHoraAtual();
+            const logObj = { id: Date.now(), tempo, texto };
+            logsSincronizados.unshift(logObj);
+            
+            if (logsSincronizados.length > 50) {
+                logsSincronizados.pop();
+            }
+
+            renderizarLogs();
+            marcarModificado();
+        }
+
+        function renderizarLogs() {
+            const logContainer = document.getElementById('combat-log');
+            logContainer.innerHTML = "";
+            logsSincronizados.forEach(log => {
+                const entrada = document.createElement('div');
+                entrada.className = "py-1 border-b border-slate-900 last:border-0";
+                entrada.innerHTML = `<span class="text-slate-500">[${log.tempo}]</span> ${log.texto}`;
+                logContainer.appendChild(entrada);
+            });
+        }
+
+        function limparLog() {
+            logsSincronizados = [{ id: 1, tempo: obterHoraAtual(), texto: "Histórico limpo pelo usuário." }];
+            renderizarLogs();
+            marcarModificado();
+        }
+
+        function obterHoraAtual() {
+            const d = new Date();
+            return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
+        }
+
+        // GERENCIAR LISTAS (TÉCNICAS E ARMAS)
+        function desenharListas() {
+            const isAdmin = (roleMode === 'admin');
+
+            const tLista = document.getElementById('tecnicas-lista');
+            tLista.innerHTML = "";
+            tecnicas.forEach(tec => {
+                tLista.innerHTML += `
+                    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 flex justify-between items-start gap-4 hover:border-purple-850 transition-all">
+                        <div>
+                            <h4 class="font-bold text-sm text-purple-300">${tec.nome}</h4>
+                            <p class="text-xs text-slate-400 mt-1">${tec.desc}</p>
+                        </div>
+                        ${isAdmin ? `
+                        <button onclick="removerEntrada('tecnica', ${tec.id})" class="text-slate-600 hover:text-red-400 transition-colors text-xs py-1 px-2 focus:outline-none"><i class="fa-solid fa-trash"></i></button>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            if(tecnicas.length === 0) {
+                tLista.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">Nenhuma técnica inata aprendida.</p>`;
+            }
+
+            const fLista = document.getElementById('ferramentas-lista');
+            fLista.innerHTML = "";
+            ferramentas.forEach(fer => {
+                fLista.innerHTML += `
+                    <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800 flex justify-between items-start gap-4 hover:border-red-900 transition-all">
+                        <div>
+                            <h4 class="font-bold text-sm text-red-300">${fer.nome}</h4>
+                            <p class="text-xs text-slate-400 mt-1">${fer.desc}</p>
+                        </div>
+                        ${isAdmin ? `
+                        <button onclick="removerEntrada('ferramenta', ${fer.id})" class="text-slate-600 hover:text-red-400 transition-colors text-xs py-1 px-2 focus:outline-none"><i class="fa-solid fa-trash"></i></button>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            if(ferramentas.length === 0) {
+                fLista.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">Nenhum equipamento amaldiçoado no arsenal.</p>`;
+            }
+        }
+
+        function removerEntrada(tipo, id) {
+            if (tipo === 'tecnica') {
+                tecnicas = tecnicas.filter(t => t.id !== id);
+            } else {
+                ferramentas = ferramentas.filter(f => f.id !== id);
+            }
+            recalcularTudo();
+            marcarModificado();
+        }
+
+        // CONTROLES DE CRIAÇÃO (MODAIS)
+        function abrirModalTecnica() {
+            document.getElementById('modal-title').innerText = "Nova Técnica Feiticeira";
+            document.getElementById('modal-type').value = "tecnica";
+            document.getElementById('modal-input-name').value = "";
+            document.getElementById('modal-input-desc').value = "";
+            document.getElementById('modal-container').classList.remove('hidden');
+        }
+
+        function abrirModalFerramenta() {
+            document.getElementById('modal-title').innerText = "Nova Ferramenta Amaldiçoada";
+            document.getElementById('modal-type').value = "ferramenta";
+            document.getElementById('modal-input-name').value = "";
+            document.getElementById('modal-input-desc').value = "";
+            document.getElementById('modal-container').classList.remove('hidden');
+        }
+
+        function fecharModal() {
+            document.getElementById('modal-container').classList.add('hidden');
+        }
+
+        function salvarModalEntrada() {
+            const tipo = document.getElementById('modal-type').value;
+            const nome = document.getElementById('modal-input-name').value.trim();
+            const desc = document.getElementById('modal-input-desc').value.trim();
+
+            if (!nome || !desc) {
+                showToast("⚠️ Preencha todos os campos amaldiçoados!", "fa-solid fa-triangle-exclamation");
+                return;
+            }
+
+            const novoItem = {
+                id: Date.now(),
+                nome: nome,
+                desc: desc
+            };
+
+            if (tipo === 'tecnica') {
+                tecnicas.push(novoItem);
+                adicionarAoLog(`🔮 Nova técnica aprendida: ${nome}`);
+            } else {
+                ferramentas.push(novoItem);
+                adicionarAoLog(`🗡️ Nova arma guardada no arsenal: ${nome}`);
+            }
+
+            fecharModal();
+            recalcularTudo();
+            marcarModificado();
+        }
+
+        // ==========================================
+        // FLUXO DE PORTAL ONLINE (LOGIN & CADASTRO)
+        // ==========================================
+
+        async function criarFichaOnlineDoPortal() {
+            const username = document.getElementById('portal-user-name').value.trim();
+            const charName = document.getElementById('portal-char-name').value.trim();
+            const clan = document.getElementById('portal-clan').value.trim();
+            const pin = document.getElementById('portal-pin').value.trim();
+
+            if (!username || !charName || !clan || !pin) {
+                showToast("⚠️ Preencha todos os campos da ficha!", "fa-solid fa-triangle-exclamation");
+                return;
+            }
+
+            const novoId = "JJK-" + Math.floor(1000 + Math.random() * 9000);
+            
+            const dadosIniciais = {
+                usuario: username,
+                nome: charName,
+                clã: clan,
+                grade: "1º Grau",
+                level: 1,
+                refino: 0,
+                massa: 75,
+                vl: 70,
+                velocidade: 12,
+                baseHp: 100,
+                baseEng: 60,
+                baseAtk: 15,
+                baseDfs: 10,
+                currentHp: 150,
+                currentEng: 60,
+                tecnicas: tecnicas,
+                ferramentas: ferramentas,
+                logs: [{ id: Date.now(), tempo: obterHoraAtual(), texto: `🔮 Registro criado pelo usuário ${username}.` }],
+                adminPin: pin,
+                id: novoId
+            };
+
+            currentSheetId = novoId;
+            currentUsername = username;
+            adminPin = pin;
+
+            if (!window.firebaseReady) {
+                // FALLBACK OFFLINE SUCESSO
+                simuladorBancoLocal[novoId] = dadosIniciais;
+                localStorage.setItem('jjk_simulador_banco_local', JSON.stringify(simuladorBancoLocal));
+                
+                onlineActive = false;
+                localStorage.setItem('jjk_current_sheet_id', currentSheetId);
+                localStorage.setItem('jjk_current_user', currentUsername);
+
+                document.getElementById('conn-indicator').className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse";
+                document.getElementById('conn-text').innerText = `Simulado: ${currentSheetId} (${username})`;
+                document.getElementById('conn-text').className = "text-xs font-semibold text-amber-400";
+
+                document.getElementById('portal-screen').classList.add('hidden');
+                carregarDadosDoObjeto(dadosIniciais);
+                
+                openConfirmModal(`Ficha Criada Localmente!\nCódigo da Ficha: ${novoId}\nPIN de Admin: ${pin}\nSeu navegador irá reter esses dados de forma offline.`, () => {});
+                return;
+            }
+
+            const db = window.getFirestoreInstance();
+            const auth = window.getAuthInstance();
+            const appId = window.getAppIdInstance();
+
+            if (!db || !auth) {
+                showToast("⚠️ Conexão amaldiçoada indisponível.", "fa-solid fa-triangle-exclamation");
+                return;
+            }
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'sheets', novoId);
+                await setDoc(docRef, dadosIniciais);
+
+                ativarEscutaTempoReal(docRef);
+                onlineActive = true;
+                
+                localStorage.setItem('jjk_current_sheet_id', currentSheetId);
+                localStorage.setItem('jjk_current_user', currentUsername);
+
+                document.getElementById('conn-indicator').className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+                document.getElementById('conn-text').innerText = `Online: ${currentSheetId} (${username})`;
+                document.getElementById('conn-text').className = "text-xs font-semibold text-emerald-400";
+
+                document.getElementById('portal-screen').classList.add('hidden');
+                
+                openConfirmModal(`Ficha Criada Online!\nCódigo da Ficha: ${novoId}\nPIN de Admin: ${pin}\nAnote o PIN para poder editar os dados no futuro.`, () => {});
+            } catch (err) {
+                console.error(err);
+                showToast("Erro ao criar registro online.", "fa-solid fa-circle-exclamation");
+            }
+        }
+
+        async function conectarFichaDoPortal() {
+            const sheetId = document.getElementById('portal-sync-id').value.trim().toUpperCase();
+            const pin = document.getElementById('portal-sync-pin').value.trim();
+
+            if (!sheetId) {
+                showToast("⚠️ Insira o código de uma ficha!", "fa-solid fa-triangle-exclamation");
+                return;
+            }
+
+            try {
+                await recuperarFichaExistente(sheetId);
+                
+                // Se um PIN foi inserido, tenta autenticar como admin
+                if (pin && pin === adminPin) {
+                    roleMode = 'admin';
+                    document.getElementById('input-admin-pin').value = "";
+                    atualizarLayoutCargo();
+                    showToast("👑 Modo de Administrador Liberado!", "fa-solid fa-crown");
+                } else if (pin) {
+                    showToast("⚠️ PIN incorreto! Conectado apenas no Modo Jogador.", "fa-solid fa-circle-exclamation");
+                }
+
+                document.getElementById('portal-screen').classList.add('hidden');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function acessarMestreDoPortal() {
+            const chave = document.getElementById('portal-mestre-key').value.trim().toUpperCase();
+            if (chave === masterPinGeral) {
+                isMasterUnlocked = true;
+                document.getElementById('portal-screen').classList.add('hidden');
+                alternarVisao('mestre');
+                desbloquearPainelMestre();
+            } else {
+                showToast("⚠️ Chave de acesso do mestre incorreta!", "fa-solid fa-triangle-exclamation");
+            }
+        }
+
+        async function recuperarFichaExistente(sheetId) {
+            // Se estiver no Modo Local Offline
+            if (!window.firebaseReady) {
+                const dbLocalRaw = localStorage.getItem('jjk_simulador_banco_local') || "{}";
+                simuladorBancoLocal = JSON.parse(dbLocalRaw);
+                const dados = simuladorBancoLocal[sheetId];
+                
+                if (dados) {
+                    currentSheetId = sheetId;
+                    currentUsername = dados.usuario || "Anônimo";
+                    
+                    carregarDadosDoObjeto(dados);
+                    onlineActive = false;
+                    
+                    localStorage.setItem('jjk_current_sheet_id', currentSheetId);
+                    localStorage.setItem('jjk_current_user', currentUsername);
+                    
+                    document.getElementById('conn-indicator').className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse";
+                    document.getElementById('conn-text').innerText = `Local: ${currentSheetId} (${currentUsername})`;
+                    document.getElementById('conn-text').className = "text-xs font-semibold text-amber-400";
+                    showToast(`✨ Ficha local carregada: ${currentSheetId}`, "fa-solid fa-circle-check");
+                } else {
+                    showToast("⚠️ Ficha local não localizada neste navegador.", "fa-solid fa-triangle-exclamation");
+                    throw new Error("Ficha local não encontrada");
+                }
+                return;
+            }
+
+            const db = window.getFirestoreInstance();
+            const appId = window.getAppIdInstance();
+
+            if (!db) {
+                showToast("⚠️ Não foi possível conectar ao servidor de dados.", "fa-solid fa-triangle-exclamation");
+                throw new Error("No Database");
+            }
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'sheets', sheetId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const dados = docSnap.data();
+                    currentSheetId = sheetId;
+                    currentUsername = dados.usuario || "Anônimo";
+                    
+                    carregarDadosDoObjeto(dados);
+                    ativarEscutaTempoReal(docRef);
+                    onlineActive = true;
+                    
+                    localStorage.setItem('jjk_current_sheet_id', currentSheetId);
+                    localStorage.setItem('jjk_current_user', currentUsername);
+                    
+                    document.getElementById('conn-indicator').className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+                    document.getElementById('conn-text').innerText = `Online: ${currentSheetId} (${currentUsername})`;
+                    document.getElementById('conn-text').className = "text-xs font-semibold text-emerald-400";
+                    showToast(`✨ Ficha conectada: ${currentSheetId}`, "fa-solid fa-circle-check");
+                } else {
+                    showToast("⚠️ Registro não encontrado na barreira.", "fa-solid fa-triangle-exclamation");
+                    throw new Error("Ficha não encontrada");
+                }
+            } catch (err) {
+                console.error(err);
+                throw err;
+            }
+        }
+
+        function desvincularFicha() {
+            openConfirmModal("Deseja desvincular sua alma desta ficha e retornar ao portal inicial?", () => {
+                if (unsubscribeSheet) {
+                    unsubscribeSheet();
+                    unsubscribeSheet = null;
+                }
+                onlineActive = false;
+                currentSheetId = null;
+                currentUsername = "";
+                localStorage.removeItem('jjk_current_sheet_id');
+                localStorage.removeItem('jjk_current_user');
+
+                if (window.firebaseReady) {
+                    document.getElementById('conn-indicator').className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse";
+                    document.getElementById('conn-text').innerText = "Online (Sem Vínculo)";
+                    document.getElementById('conn-text').className = "text-xs font-semibold text-emerald-400";
+                } else {
+                    document.getElementById('conn-indicator').className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse";
+                    document.getElementById('conn-text').innerText = "Modo Local Ativo (Offline)";
+                    document.getElementById('conn-text').className = "text-xs font-semibold text-amber-400";
+                }
+
+                // Reseta a interface para o estado padrão
+                document.getElementById('portal-screen').classList.remove('hidden');
+                document.getElementById('portal-sync-id').value = "";
+                document.getElementById('portal-sync-pin').value = "";
+            });
+        }
+
+        function ativarEscutaTempoReal(docRef) {
+            if (unsubscribeSheet) {
+                unsubscribeSheet();
+            }
+
+            unsubscribeSheet = onSnapshot(docRef, (doc) => {
+                if (doc.exists() && !blockSyncBack) {
+                    const dados = doc.data();
+                    carregarDadosDoObjeto(dados);
+                }
+            }, (error) => {
+                console.error("Erro na escuta em tempo real: ", error);
+            });
+        }
+
+        // AUXILIARES DE EMPACOTAMENTO DE DADOS
+        function obterObjetoDadosFicha() {
+            return {
+                usuario: currentUsername || "Anônimo",
+                nome: document.getElementById('char-name').value,
+                grade: document.getElementById('char-grade').value,
+                clã: document.getElementById('char-clan').value,
+                level: level,
+                refino: refino,
+                massa: parseInt(document.getElementById('input-massa').value) || 75,
+                vl: parseInt(document.getElementById('input-vl').value) || 70,
+                velocidade: parseInt(document.getElementById('input-velocidade').value) || 12,
+                baseHp: parseInt(document.getElementById('base-hp').value) || 100,
+                baseEng: parseInt(document.getElementById('base-eng').value) || 60,
+                baseAtk: parseInt(document.getElementById('base-atk').value) || 15,
+                baseDfs: parseInt(document.getElementById('base-dfs').value) || 10,
+                
+                currentHp: parseInt(document.getElementById('input-current-hp').value) || 150,
+                currentEng: parseInt(document.getElementById('input-current-eng').value) || 60,
+
+                tecnicas: tecnicas,
+                ferramentas: ferramentas,
+                logs: logsSincronizados,
+                adminPin: adminPin
+            };
+        }
+
+        function carregarDadosDoObjeto(dados) {
+            document.getElementById('char-name').value = dados.nome || "";
+            document.getElementById('char-grade').value = dados.grade || "1º Grau";
+            document.getElementById('char-clan').value = dados.clã || "";
+            
+            level = parseInt(dados.level) || 1;
+            refino = parseInt(dados.refino) || 0;
+            document.getElementById('display-level').innerText = level;
+            document.getElementById('display-refine').innerText = refino;
+
+            document.getElementById('input-massa').value = dados.massa || 75;
+            document.getElementById('input-vl').value = dados.vl || 70;
+            document.getElementById('input-velocidade').value = dados.velocidade || 12;
+
+            document.getElementById('val-massa').innerText = `${dados.massa || 75} kg`;
+            document.getElementById('val-vl').innerText = `${dados.vl || 70} L`;
+            document.getElementById('val-velocidade').innerText = `${dados.velocidade || 12} km/h`;
+
+            document.getElementById('base-hp').value = dados.baseHp || 100;
+            document.getElementById('base-eng').value = dados.baseEng || 60;
+            document.getElementById('base-atk').value = dados.baseAtk || 15;
+            document.getElementById('base-dfs').value = dados.baseDfs || 10;
+
+            tecnicas = dados.tecnicas || [];
+            ferramentas = dados.ferramentas || [];
+            logsSincronizados = dados.logs || [];
+            adminPin = dados.adminPin || "1234";
+
+            recalcularTudo();
+
+            document.getElementById('input-current-hp').value = dados.currentHp !== undefined ? dados.currentHp : parseInt(document.getElementById('total-hp').innerText);
+            document.getElementById('input-current-eng').value = dados.currentEng !== undefined ? dados.currentEng : parseInt(document.getElementById('total-eng').innerText);
+            
+            document.getElementById('current-hp-display').innerText = document.getElementById('input-current-hp').value;
+            document.getElementById('current-eng-display').innerText = document.getElementById('input-current-eng').value;
+
+            atualizarHpBar(document.getElementById('input-current-hp').value, parseInt(document.getElementById('total-hp').innerText));
+            atualizarEngBar(document.getElementById('input-current-eng').value, parseInt(document.getElementById('total-eng').innerText));
+
+            renderizarLogs();
+        }
+
+        async function marcarModificado() {
+            salvarDadosLocais();
+            
+            if (!currentSheetId) return;
+
+            // Se for Local Fallback, salva no simulador local
+            if (!window.firebaseReady) {
+                const atualizados = obterObjetoDadosFicha();
+                simuladorBancoLocal[currentSheetId] = atualizados;
+                localStorage.setItem('jjk_simulador_banco_local', JSON.stringify(simuladorBancoLocal));
+                renderPainelMestreSeNecessario();
+                return;
+            }
+
+            const db = window.getFirestoreInstance();
+            const appId = window.getAppIdInstance();
+            if (!db) return;
+
+            blockSyncBack = true;
+
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'sheets', currentSheetId);
+                const atualizados = obterObjetoDadosFicha();
+                await updateDoc(docRef, atualizados);
+            } catch (err) {
+                console.error("Falha ao salvar modificação online: ", err);
+            } finally {
+                blockSyncBack = false;
+            }
+        }
+
+        // LOCAL PERSISTENCE
+        function salvarDadosLocais() {
+            const dados = obterObjetoDadosFicha();
+            localStorage.setItem('jjk_rpg_ficha_online_v1', JSON.stringify(dados));
+        }
+
+        function carregarDadosLocais() {
+            const salvos = localStorage.getItem('jjk_rpg_ficha_online_v1');
+            const dbLocalRaw = localStorage.getItem('jjk_simulador_banco_local') || "{}";
+            simuladorBancoLocal = JSON.parse(dbLocalRaw);
+
+            if (salvos) {
+                const dados = JSON.parse(salvos);
+                carregarDadosDoObjeto(dados);
+            }
+        }
+    </script>
+</body>
+</html>
